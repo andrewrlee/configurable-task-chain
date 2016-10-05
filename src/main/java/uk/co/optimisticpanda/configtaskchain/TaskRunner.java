@@ -19,12 +19,12 @@ public class TaskRunner<T> {
 		this(asList(observables));
 	}
 	
-	public Observable<Accumalator<T>> asObservable() {
+	public Observable<Accumulator<T>> asObservable() {
 		return Observable.<T>merge(observables)
-				.reduce(new Accumalator<T>(), Accumalator::add);
+				.reduce(new Accumulator<T>(), Accumulator::add);
 	}
 	
-	public Accumalator<T> run() {
+	public Accumulator<T> run() {
 		return asObservable().toBlocking().first();
 	}
 }

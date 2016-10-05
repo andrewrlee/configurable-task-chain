@@ -7,10 +7,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
-public class Accumalator<T> implements Iterable<T> {
+public class Accumulator<T> implements Iterable<T> {
 	private final List<T> vals = new ArrayList<>();
 
-	public Accumalator<T> add(T val) {
+	public Accumulator<T> add(T val) {
 		vals.add(val);
 		return this;
 	}
@@ -37,7 +37,7 @@ public class Accumalator<T> implements Iterable<T> {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		Accumalator<?> other = (Accumalator<?>) obj;
+		Accumulator<?> other = (Accumulator<?>) obj;
 		return Objects.equals(vals, other.vals);
 	}
 

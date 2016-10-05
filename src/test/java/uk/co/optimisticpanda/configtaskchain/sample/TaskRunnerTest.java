@@ -19,7 +19,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import rx.observers.TestSubscriber;
-import uk.co.optimisticpanda.configtaskchain.Accumalator;
+import uk.co.optimisticpanda.configtaskchain.Accumulator;
 import uk.co.optimisticpanda.configtaskchain.TaskRunner;
 
 public class TaskRunnerTest {
@@ -33,19 +33,19 @@ public class TaskRunnerTest {
 					inParrallel(task(testService::duration)), 
 					inParrallel(task(testService::height)),
 					retry(2, inParrallel(task(testService::widthOnlySucceedsEvery3rdAttempt))),
-					ignoreAnyFailure(task(testService::faultyWeight)));
+					ignoreAnyFailure(task(testService::weightAlwaysFails)));
 	}
 
 	@Test
 	public void checkRun() {
-		Accumalator<MetricResult<?>> accumalator = runner.run();
+		Accumulator<MetricResult<?>> accumalator = runner.run();
 
 		verifyAccumalatedResults(accumalator);
 	}
 
 	@Test
 	public void checkAsObservable() {
-		TestSubscriber<Accumalator<MetricResult<?>>> subscriber = new TestSubscriber<>();
+		TestSubscriber<Accumulator<MetricResult<?>>> subscriber = new TestSubscriber<>();
 		
 		runner.asObservable().subscribe(subscriber);
 		
@@ -80,11 +80,31 @@ public class TaskRunnerTest {
 		assertThat(runner.run())
 			.containsExactlyInAnyOrder(
 				new MetricResult<>(AREA, 6));
+	}
+
+	@Test
+	public void check() {
+		runner = new TaskRunner<>(
+				inParrallel(task(testService::duration)), 
+				inParrallel(task(testService::height)),
+				ignoreAnyFailure(task(testService::weightAlwaysFails)),
+				zip(
+					retry(2, task(testService::widthOnlySucceedsEvery3rdAttempt)),
+					task(testService::height), 
+					(width, height) -> width.mergeWith(height, AREA, (h, w) -> h * w)));
+	
+		Accumulator<MetricResult<?>> accumulator = runner.run();
 		
+		assertThat(accumulator)
+			.containsExactlyInAnyOrder(
+				new MetricResult<>(HEIGHT, 2),
+				new MetricResult<>(AREA, 6),
+				new MetricResult<>(DURATION, Duration.ofMinutes(4)));
+
 	}
 	
 	
-	private void verifyAccumalatedResults(Accumalator<MetricResult<?>> accumalator) {
+	private void verifyAccumalatedResults(Accumulator<MetricResult<?>> accumalator) {
 		assertThat(accumalator)
 			.containsExactlyInAnyOrder(
 					new MetricResult<>(HEIGHT, 2),

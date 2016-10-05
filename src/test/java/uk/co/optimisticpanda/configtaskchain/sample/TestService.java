@@ -35,7 +35,7 @@ public class TestService {
 		return new MetricResult<>(WIDTH, 3);	
 	}
 	
-	public MetricResult<Double> faultyWeight() {
+	public MetricResult<Double> weightAlwaysFails() {
 		L.error("failed to get weight on attempt: 1");
 		throw new RuntimeException("error!");
 	}	
