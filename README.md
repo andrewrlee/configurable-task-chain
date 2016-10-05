@@ -1,7 +1,7 @@
 # configurable-task-chain
-Config driver job runner based on rx-Java 
+Config driver job runner based on rx-java 
 
-Not yet config driven!
+Not yet config driven so currently just a thin wrapper around rx-java!
 
 ```java
     @Test
