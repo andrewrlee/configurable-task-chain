@@ -2,6 +2,7 @@ package uk.co.optimisticpanda.configtaskchain;
 
 import java.util.concurrent.Callable;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import rx.Observable;
 import rx.schedulers.Schedulers;
@@ -29,4 +30,11 @@ public enum TaskDecorators {
 		return obs.zipWith(other, f::apply);
 	}
 	
+	public static <T, U> Observable<U> thenPerform(Observable<T> obs, Function<T, Observable<U>> f) {
+		return obs.flatMap(v -> f.apply(v));
+	}
+	
+	public static <T, U> Observable<U> then(Observable<T> obs, Function<T, U> f) {
+		return obs.map(v -> f.apply(v));
+	}
 }

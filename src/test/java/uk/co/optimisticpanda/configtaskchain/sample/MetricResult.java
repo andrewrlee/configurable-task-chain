@@ -1,13 +1,14 @@
 package uk.co.optimisticpanda.configtaskchain.sample;
 
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import com.google.common.base.Objects;
 
 public class MetricResult<T> {
 	
 	public enum MetricType {
-		AREA, HEIGHT, WIDTH, DURATION, WEIGHT,
+		AREA, HEIGHT, WIDTH, DURATION, WEIGHT, DOUBLE_HEIGHT
 	}
 
 	private final MetricType type;
@@ -21,6 +22,11 @@ public class MetricResult<T> {
 	public <S, U> MetricResult<U> mergeWith(MetricResult<S> other, MetricType type, BiFunction<T, S, U> f) {
 		return new MetricResult<>(type, f.apply(value, other.value));
 	}
+	
+	public <U> MetricResult<U> map(MetricType type, Function<T, U> f) {
+		return new MetricResult<>(type, f.apply(value));
+	}
+	
 	
 	@Override
 	public int hashCode() {
