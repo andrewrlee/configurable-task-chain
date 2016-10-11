@@ -32,11 +32,11 @@ A partial builder has been implemented:
 public void runTree() {
     
     TaskTree tree = TaskTree.create()
-                        .rootTask("task1", TypeToken.of(String.class))
+                        .rootTask("task1", TypeToken.of(String.class), TypeToken.of(String.class))
                             .connectedTo()
-                                .chainedTask("task2", TypeToken.of(String.class))
+                                .chainedTask("task2", TypeToken.of(String.class), TypeToken.of(String.class))
                                     .connectedTo()
-                                        .chainedTask("task3", TypeToken.of(String.class))
+                                        .chainedTask("task3", TypeToken.of(String.class), TypeToken.of(String.class))
                                         .end()
                                     .end()
                                 .end()
@@ -60,5 +60,4 @@ public void runTree() {
     
     assertThat(subscriber.getOnNextEvents()).containsExactly("initial : then task1 : then task2 : then task3");
 }
-
 ```
