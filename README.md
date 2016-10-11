@@ -32,16 +32,16 @@ A partial builder has been implemented:
 public void runTree() {
     
     TaskTree tree = TaskTree.create()
-                        .rootTask("task1", TypeToken.of(String.class), TypeToken.of(String.class))
+                .rootTask("task1", TypeToken.of(String.class), TypeToken.of(String.class))
+                    .connectedTo()
+                        .chainedTask("task2", TypeToken.of(String.class), TypeToken.of(String.class))
                             .connectedTo()
-                                .chainedTask("task2", TypeToken.of(String.class), TypeToken.of(String.class))
-                                    .connectedTo()
-                                        .chainedTask("task3", TypeToken.of(String.class), TypeToken.of(String.class))
-                                        .end()
-                                    .end()
+                                .chainedTask("task3", TypeToken.of(String.class), TypeToken.of(String.class))
                                 .end()
                             .end()
-                        .end();
+                        .end()
+                    .end()
+                .end();
     
     TaskParser parser = new TaskParser(new ActionResolver(){
         @Override
