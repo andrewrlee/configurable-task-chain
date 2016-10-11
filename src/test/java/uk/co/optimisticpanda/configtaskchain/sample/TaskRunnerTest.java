@@ -1,6 +1,5 @@
 package uk.co.optimisticpanda.configtaskchain.sample;
 
-import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -10,6 +9,7 @@ import static uk.co.optimisticpanda.configtaskchain.TaskDecorators.retry;
 import static uk.co.optimisticpanda.configtaskchain.TaskDecorators.task;
 import static uk.co.optimisticpanda.configtaskchain.TaskDecorators.then;
 import static uk.co.optimisticpanda.configtaskchain.TaskDecorators.thenPerform;
+import static uk.co.optimisticpanda.configtaskchain.TaskDecorators.unaryDependentTask;
 import static uk.co.optimisticpanda.configtaskchain.TaskDecorators.zip;
 import static uk.co.optimisticpanda.configtaskchain.sample.MetricResult.MetricType.AREA;
 import static uk.co.optimisticpanda.configtaskchain.sample.MetricResult.MetricType.DURATION;
@@ -18,18 +18,17 @@ import static uk.co.optimisticpanda.configtaskchain.sample.MetricResult.MetricTy
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 import org.junit.Before;
 import org.junit.Test;
 
-import rx.Observable;
 import rx.observers.TestSubscriber;
 import uk.co.optimisticpanda.configtaskchain.Accumulator;
+import uk.co.optimisticpanda.configtaskchain.TaskDecorators.DependentTask;
+import uk.co.optimisticpanda.configtaskchain.TaskDecorators.UnaryDependentTask;
 import uk.co.optimisticpanda.configtaskchain.TaskRunner;
 
 public class TaskRunnerTest {
@@ -123,7 +122,7 @@ public class TaskRunnerTest {
 	
 	@Test
 	public void checkThenPerformSimpleTask() {
-		Function<Integer, Observable<Integer>> square = i -> task(() -> i * i);
+		DependentTask<Integer, Integer> square = i -> task(() -> i * i);
 		
 		TaskRunner<Integer> squarer = new TaskRunner<>(
 				thenPerform(thenPerform(thenPerform(task(() -> 2), square ), square), square));
@@ -133,15 +132,15 @@ public class TaskRunnerTest {
 	
 	@Test
 	public void checkThenPerformSimpleReduction() {
-		Function<Integer, Function<List<Integer>, Observable<List<Integer>>>> conser = i -> {
+		Function<Integer, UnaryDependentTask<List<Integer>>> conser = i -> {
 			return list -> task(() -> {
 				list.add(i);
 				return list;
 			});
 		};
-		Function<List<Integer>, Observable<List<Integer>>> first = conser.apply(1);
-		Function<List<Integer>, Observable<List<Integer>>> second = conser.apply(2);
-		Function<List<Integer>, Observable<List<Integer>>> third = conser.apply(3);
+		UnaryDependentTask<List<Integer>> first = conser.apply(1);
+		UnaryDependentTask<List<Integer>> second = conser.apply(2);
+		UnaryDependentTask<List<Integer>> third = conser.apply(3);
 		
 		TaskRunner<List<Integer>> reducer = new TaskRunner<>(
 				thenPerform(thenPerform(thenPerform(task(() -> new ArrayList<>()), first), second), third));
@@ -151,15 +150,15 @@ public class TaskRunnerTest {
 	
 	@Test
 	public void checkThenSimpleReduction() {
-		Function<Integer, Function<List<Integer>, List<Integer>>> conser = i -> {
+		Function<Integer, UnaryOperator<List<Integer>>> conser = i -> {
 			return list -> {
 				list.add(i);
 				return list;
 			};
 		};
-		Function<List<Integer>, List<Integer>> first = conser.apply(1);
-		Function<List<Integer>, List<Integer>> second = conser.apply(2);
-		Function<List<Integer>, List<Integer>> third = conser.apply(3);
+		UnaryOperator<List<Integer>> first = conser.apply(1);
+		UnaryOperator<List<Integer>> second = conser.apply(2);
+		UnaryOperator<List<Integer>> third = conser.apply(3);
 		
 		TaskRunner<List<Integer>> reducer = new TaskRunner<>(
 				then(then(then(task(() -> new ArrayList<>()), first), second), third));
@@ -171,6 +170,25 @@ public class TaskRunnerTest {
 		
 		assertThat(reducer.run()).flatExtracting(i -> i).containsExactly(1, 2 , 3);
 	}
+	
+	@Test
+	public void checkThenSimpleReduction2() {
+		
+		Function<Integer, UnaryDependentTask<List<Integer>>> taskBuilder = i -> unaryDependentTask(list -> {
+			list.add(1);
+			return list; 
+		});
+		
+		UnaryDependentTask<List<Integer>> first = taskBuilder.apply(1);
+		UnaryDependentTask<List<Integer>> second = taskBuilder.apply(2);
+		UnaryDependentTask<List<Integer>> third = taskBuilder.apply(3);
+		
+		TaskRunner<List<Integer>> reducer = new TaskRunner<>(
+				thenPerform(thenPerform(thenPerform(task(() -> new ArrayList<>()), first), second), third));
+
+		assertThat(reducer.run()).flatExtracting(i -> i).containsExactly(1, 2 , 3);
+	
+	}	
 	
 	@Test
 	public void example() {

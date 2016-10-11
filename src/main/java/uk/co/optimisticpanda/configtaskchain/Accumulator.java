@@ -11,6 +11,9 @@ public class Accumulator<T> implements Iterable<T> {
 	private final List<T> vals = new ArrayList<>();
 
 	public Accumulator<T> add(T val) {
+		if (val instanceof Accumulator) {
+			vals.addAll(((Accumulator<T>) val).getVals());
+		}
 		vals.add(val);
 		return this;
 	}

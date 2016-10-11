@@ -24,3 +24,32 @@ Not yet config driven so currently just a thin wrapper around rx-java!
                 new MetricResult<>(DURATION, Duration.ofMinutes(4)));
     }
 ```
+
+A partial builder has been implemented:
+
+```java
+        TaskTree tree = TaskTree.create()
+                .connector()
+                    .ignoreFailures()
+                    .task("task1")
+                        .connectedTo()
+                            .task("task2")
+                                .dependentOn(TypeToken.of(String.class))
+                                .connectedTo()
+                                    .task("task3")
+                                        .dependentOn(TypeToken.of(String.class))
+                                        .end()
+                                    .end()
+                                .end()
+                            .end()
+                        .end()
+                    .end();
+
+        Node root = tree.getChildren().get(0);
+        parser.parse(root).subscribe(subscriber);
+        
+        subscriber.awaitTerminalEvent(30, SECONDS);
+        subscriber.assertValueCount(1);
+        
+        assertThat(subscriber.getOnNextEvents()).containsExactly("initial : then : then");
+```
