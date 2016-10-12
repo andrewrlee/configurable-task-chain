@@ -28,36 +28,41 @@ public void check() {
 A partial builder has been implemented:
 
 ```java
+private static final TypeToken<String> STRING = TypeToken.of(String.class);
+
 @Test
 public void runTree() {
     
+    DependentTaskKey<String, String> task1 = DependentTaskKey.unaryTaskKey("task1", STRING);
+    DependentTaskKey<String, String> task2 = DependentTaskKey.unaryTaskKey("task2", STRING);
+    DependentTaskKey<String, String> task3 = DependentTaskKey.unaryTaskKey("task3", STRING);
+    
+    ActionResolver actionResolver = new ActionResolver()
+        .put(task1, dependentTask(input -> input + " : " + task1.getIdentifier()))
+        .put(task2, dependentTask(input -> input + " : " + task2.getIdentifier()))
+        .put(task3, dependentTask(input -> input + " : " + task3.getIdentifier()));
+    
     TaskTree tree = TaskTree.create()
-                .rootTask("task1", TypeToken.of(String.class), TypeToken.of(String.class))
-                    .connectedTo()
-                        .chainedTask("task2", TypeToken.of(String.class), TypeToken.of(String.class))
+                        .rootTask(task1)
                             .connectedTo()
-                                .chainedTask("task3", TypeToken.of(String.class), TypeToken.of(String.class))
+                                .chainedTask(task2)
+                                    .connectedTo()
+                                        .chainedTask(task3)
+                                        .end()
+                                    .end()
                                 .end()
                             .end()
-                        .end()
-                    .end()
-                .end();
-    
-    TaskParser parser = new TaskParser(new ActionResolver(){
-        @Override
-        public <U, T> Observable<T> resolveDependentTask(FollowOnTask task, U result) {
-            return (Observable<T>) dependentTask(r -> r + " : " + "then " + task.id().orElse("")).build(result);
-        }
-    });
+                        .end();
     
     TestSubscriber<Object> subscriber = new TestSubscriber<>();
     
-    parser.parse(tree.getRoot(), Observable.just("initial"))
+    new TaskParser(actionResolver).parse(tree.getRoot(), Observable.just("initial"))
         .subscribe(subscriber);
     
     subscriber.awaitTerminalEvent(30, SECONDS);
     subscriber.assertValueCount(1);
     
-    assertThat(subscriber.getOnNextEvents()).containsExactly("initial : then task1 : then task2 : then task3");
+    assertThat(subscriber.getOnNextEvents())
+        .containsExactly("initial : task1 : task2 : task3");
 }
 ```
