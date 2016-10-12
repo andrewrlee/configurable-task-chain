@@ -8,12 +8,9 @@ import org.junit.Test;
 
 import rx.Observable;
 import rx.observers.TestSubscriber;
-import uk.co.optimisticpanda.configtaskchain.TaskDecorators.DependentTask;
 import uk.co.optimisticpanda.configtaskchain.model.DependentTaskKey;
-import uk.co.optimisticpanda.configtaskchain.model.Node;
-import uk.co.optimisticpanda.configtaskchain.model.Node.FollowOnTask;
-import uk.co.optimisticpanda.configtaskchain.model.TaskRegistry;
 import uk.co.optimisticpanda.configtaskchain.model.TaskParser;
+import uk.co.optimisticpanda.configtaskchain.model.TaskRegistry;
 import uk.co.optimisticpanda.configtaskchain.model.TaskTree;
 
 import com.google.common.reflect.TypeToken;
@@ -34,8 +31,7 @@ public class TaskTreeTest {
 			.put(task2, dependentTask(input -> input + " : " + task2.getIdentifier()))
 			.put(task3, dependentTask(input -> input + " : " + task3.getIdentifier()));
 		
-		TaskTree tree = TaskTree.create()
-							.rootTask(task1)
+		TaskTree tree = TaskTree.initialTask(task1)
 								.connectedTo()
 									.chainedTask(task2)
 										.connectedTo()

@@ -42,18 +42,17 @@ public void runTree() {
         .put(task2, dependentTask(input -> input + " : " + task2.getIdentifier()))
         .put(task3, dependentTask(input -> input + " : " + task3.getIdentifier()));
     
-    TaskTree tree = TaskTree.create()
-                        .rootTask(task1)
-                            .connectedTo()
-                                .chainedTask(task2)
+    TaskTree tree = TaskTree.initialTask(task1)
                                     .connectedTo()
-                                        .chainedTask(task3)
+                                        .chainedTask(task2)
+                                            .connectedTo()
+                                                .chainedTask(task3)
+                                                .end()
+                                            .end()
                                         .end()
                                     .end()
-                                .end()
-                            .end()
-                        .end();
-    
+                                .end();
+        
     TestSubscriber<Object> subscriber = new TestSubscriber<>();
     
     new TaskParser(actionResolver).parse(tree.getRoot(), Observable.just("initial"))

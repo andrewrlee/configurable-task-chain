@@ -11,8 +11,8 @@ public class TaskTree extends Parent<TaskTree, Node> {
 
 	private Node root;
 	
-	public static TaskTree create() {
-		return new TaskTree();
+	public static TaskBuilder<TaskTree> initialTask(DependentTaskKey<?, ?> key) {
+		return new TaskBuilder<>(new TaskTree(), key);
 	}
 
 	public Node getRoot() {
@@ -23,10 +23,6 @@ public class TaskTree extends Parent<TaskTree, Node> {
 	protected TaskTree add(Node node) {
 		this.root = node;
 		return this;
-	}
-	
-	public TaskBuilder<TaskTree> rootTask(DependentTaskKey<?, ?> key) {
-		return new TaskBuilder<>(this, key);
 	}
 	
 	public static class ConnectorBuilder<PARENT extends Parent<PARENT, Node>> extends Parent<ConnectorBuilder<PARENT>, Node> {
